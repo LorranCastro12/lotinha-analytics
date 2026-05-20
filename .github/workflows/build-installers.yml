@@ -1,0 +1,125 @@
+name: Build Installers
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  # ── Linux ────────────────────────────────────────────────────────────────────
+  build-linux:
+    name: Linux (x86_64)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system deps (Tk)
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install project + PyInstaller
+        run: uv sync && uv pip install pyinstaller
+
+      - name: Build executable
+        run: uv run pyinstaller lotinha.spec --distpath dist-linux
+
+      - name: Package installer tar.gz
+        run: |
+          mkdir -p pkg/lotinha-analytics
+          cp dist-linux/lotinha-analytics pkg/lotinha-analytics/
+          cp installer/lotinha.desktop pkg/lotinha-analytics/
+          # Script de instalação integrado
+          cat > pkg/lotinha-analytics/install.sh << 'INSTALL'
+          #!/usr/bin/env bash
+          set -e
+          DEST=/opt/lotinha-analytics
+          BIN=/usr/local/bin/lotinha-analytics
+          DESKTOP=/usr/share/applications/lotinha.desktop
+
+          echo "Instalando Lotinha Analytics em $DEST ..."
+          sudo mkdir -p "$DEST"
+          sudo cp lotinha-analytics "$DEST/"
+          sudo chmod +x "$DEST/lotinha-analytics"
+          sudo cp lotinha.desktop "$DESKTOP"
+          sudo ln -sf "$DEST/lotinha-analytics" "$BIN"
+          echo "✓ Instalado. Execute: lotinha-analytics"
+          INSTALL
+          chmod +x pkg/lotinha-analytics/install.sh
+          tar -czf lotinha-linux-x86_64.tar.gz -C pkg lotinha-analytics
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer
+          path: lotinha-linux-x86_64.tar.gz
+          retention-days: 30
+
+  # ── Windows ──────────────────────────────────────────────────────────────────
+  build-windows:
+    name: Windows (x64)
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install project + PyInstaller
+        run: uv sync && uv pip install pyinstaller
+
+      - name: Build executable
+        run: uv run pyinstaller lotinha.spec
+
+      - name: Build Windows installer (Inno Setup)
+        run: |
+          choco install innosetup --no-progress -y
+          iscc installer\windows.iss
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: dist/lotinha-setup-windows.exe
+          retention-days: 30
+
+  # ── Release (somente em tags v*) ─────────────────────────────────────────────
+  release:
+    name: GitHub Release
+    needs: [build-linux, build-windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-installer
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            lotinha-linux-x86_64.tar.gz
+            lotinha-setup-windows.exe
+          generate_release_notes: true

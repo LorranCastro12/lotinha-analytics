@@ -47,4 +47,11 @@ Thumbs.db
 
 # PyInstaller
 *.spec
+!lotinha.spec
 dist/
+dist-linux/
+pkg/
+# Instaladores gerados (grandes demais para git; use GitHub Releases)
+*.tar.gz
+*.exe
+!installer/

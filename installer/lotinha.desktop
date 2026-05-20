@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Lotinha Analytics
+Comment=Sistema de análise e predição de resultados da Lotinha
+Exec=/opt/lotinha-analytics/lotinha-analytics
+Icon=/opt/lotinha-analytics/lotinha.png
+Terminal=false
+Categories=Utility;Education;
+StartupNotify=true

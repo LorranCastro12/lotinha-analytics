@@ -55,6 +55,7 @@ dev = [
     "ruff>=0.4",
     "pandas-stubs>=2.2",
     "types-reportlab",
+    "pyinstaller>=6.6",
 ]
 
 [project.scripts]
