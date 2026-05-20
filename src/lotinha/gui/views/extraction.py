@@ -56,9 +56,17 @@ class ExtractionView(ctk.CTkFrame):
                         variable=self._backup_var).grid(
             row=3, column=0, columnspan=2, padx=12, pady=4, sticky="w")
 
-        # Botão
-        self._btn = ctk.CTkButton(self, text="Extrair", width=160, command=self._start)
-        self._btn.grid(row=2, column=0, pady=12)
+        # Botões
+        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        btn_frame.grid(row=2, column=0, pady=12)
+        self._btn = ctk.CTkButton(btn_frame, text="Extrair", width=160, command=self._start)
+        self._btn.pack(side="left", padx=8)
+        self._btn_recover = ctk.CTkButton(
+            btn_frame, text="Recuperar Lacunas", width=180,
+            fg_color="#F4A000", hover_color="#B07000",
+            command=self._start_recover,
+        )
+        self._btn_recover.pack(side="left", padx=8)
 
         # Progresso
         self._progress = ctk.CTkProgressBar(self, width=500)
@@ -144,13 +152,17 @@ class ExtractionView(ctk.CTkFrame):
                 elif kind == "done":
                     report = item[1]
                     self._progress.set(1.0)
-                    self._progress_label.configure(text="Concluído.")
-                    self._log_line(
-                        f"Extraídos={report.extraidos}  "
-                        f"já_presentes={report.ja_presentes}  "
-                        f"vazios={report.vazios}  "
-                        f"falhas={report.falhas}"
-                    )
+                    if report.total_dias == 0:
+                        self._progress_label.configure(text="Nenhuma lacuna encontrada.")
+                        self._log_line("Nenhuma lacuna para recuperar.")
+                    else:
+                        self._progress_label.configure(text="Concluído.")
+                        self._log_line(
+                            f"Extraídos={report.extraidos}  "
+                            f"já_presentes={report.ja_presentes}  "
+                            f"vazios={report.vazios}  "
+                            f"falhas={report.falhas}"
+                        )
                     if report.backup_path:
                         self._log_line(f"Backup: {report.backup_path}")
                     self._finish()
@@ -163,9 +175,45 @@ class ExtractionView(ctk.CTkFrame):
             pass
         self.after(150, self._poll)
 
+    def _start_recover(self) -> None:
+        if self._running:
+            return
+        self._running = True
+        self._btn.configure(state="disabled")
+        self._btn_recover.configure(state="disabled", text="Recuperando...")
+        self._progress.set(0)
+        self._progress_label.configure(text="Buscando lacunas...")
+        thread = threading.Thread(target=self._run_recover, daemon=True)
+        thread.start()
+        self.after(150, self._poll)
+
+    def _run_recover(self) -> None:
+        from lotinha.extraction.api_client import ApiClient
+        from lotinha.extraction.orchestrator import ExtractionOrchestrator
+
+        api = ApiClient(
+            base_url=str(self._settings.api_base_url),
+            rate_limit=float(self._settings.api_rate_limit),
+        )
+        orchestrator = ExtractionOrchestrator(
+            api_client=api,
+            repo=self._repo,
+            db_path=self._settings.db_path,
+        )
+
+        def progress(atual: int, total: int, data: date) -> None:
+            self._q.put(("progress", atual, total, data))
+
+        try:
+            report = orchestrator.recover_gaps(progress_callback=progress)
+            self._q.put(("done", report))
+        except Exception as exc:
+            self._q.put(("error", str(exc)))
+
     def _finish(self) -> None:
         self._running = False
         self._btn.configure(state="normal", text="Extrair")
+        self._btn_recover.configure(state="normal", text="Recuperar Lacunas")
 
     def _log_line(self, text: str, color: str = "white") -> None:
         self._log.configure(state="normal")
