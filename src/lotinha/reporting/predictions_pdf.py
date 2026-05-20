@@ -8,7 +8,7 @@ from typing import Any
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     HRFlowable,
@@ -80,6 +80,26 @@ def _make_strategy(nome: str) -> BaseStrategy:
     return strat_map.get(nome, ensemble)
 
 
+def _cell_style() -> ParagraphStyle:
+    return ParagraphStyle(
+        "cell",
+        fontName="Helvetica",
+        fontSize=8,
+        leading=11,
+        wordWrap="CJK",
+    )
+
+
+def _header_style() -> ParagraphStyle:
+    return ParagraphStyle(
+        "header",
+        fontName="Helvetica-Bold",
+        fontSize=9,
+        leading=12,
+        textColor=colors.white,
+    )
+
+
 def _build_prediction_rows(
     repo: SorteioRepository,
     bancas: list[str],
@@ -87,9 +107,17 @@ def _build_prediction_rows(
     strategy: BaseStrategy,
     n_preditos: int,
     data_alvo: date,
-) -> tuple[list[list[str]], int]:
-    header = ["Banca", "Horário", f"Números Preditos (top {n_preditos})", "Confiança", "Histórico"]
-    rows: list[list[str]] = [header]
+) -> tuple[list[list[Any]], int]:
+    cs = _cell_style()
+    hs = _header_style()
+    header: list[Any] = [
+        Paragraph("Banca", hs),
+        Paragraph("Hor.", hs),
+        Paragraph(f"Números Preditos (top {n_preditos})", hs),
+        Paragraph("Conf.", hs),
+        Paragraph("Hist.", hs),
+    ]
+    rows: list[list[Any]] = [header]
     n_ok = 0
 
     for banca in bancas:
@@ -101,7 +129,13 @@ def _build_prediction_rows(
             df = df_full[df_full["data"] < data_alvo].copy()
 
             if df.empty:
-                rows.append([banca, f"{hora:02d}h", "Sem histórico anterior", "—", "0"])
+                rows.append([
+                    Paragraph(banca, cs),
+                    Paragraph(f"{hora:02d}h", cs),
+                    Paragraph("Sem histórico anterior", cs),
+                    Paragraph("—", cs),
+                    Paragraph("0", cs),
+                ])
                 continue
 
             try:
@@ -116,13 +150,19 @@ def _build_prediction_rows(
                 nums_str = f"Erro: {exc}"
                 conf_str = "—"
 
-            rows.append([banca, f"{hora:02d}h", nums_str, conf_str, str(len(df))])
+            rows.append([
+                Paragraph(banca, cs),
+                Paragraph(f"{hora:02d}h", cs),
+                Paragraph(nums_str, cs),
+                Paragraph(conf_str, cs),
+                Paragraph(str(len(df)), cs),
+            ])
 
     return rows, n_ok
 
 
 def _build_story(
-    rows: list[list[str]],
+    rows: list[list[Any]],
     data_alvo: date,
     estrategia_nome: str,
     n_preditos: int,
@@ -143,20 +183,18 @@ def _build_story(
     story.append(HRFlowable(width="100%", thickness=1, color=colors.darkgreen))
     story.append(Spacer(1, 0.4 * cm))
 
-    col_widths = [5 * cm, 1.8 * cm, 6.5 * cm, 2.2 * cm, 2 * cm]
+    # Widths sum to 17cm (A4 usable width with 2cm margins each side)
+    col_widths = [4.5 * cm, 1.5 * cm, 7.5 * cm, 2.0 * cm, 1.5 * cm]
     tbl = Table(rows, colWidths=col_widths, repeatRows=1)
     tbl.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.darkgreen),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 10),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
         ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
-        ("FONTSIZE", (0, 1), (-1, -1), 9),
-        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-        ("TOPPADDING", (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("ALIGN", (1, 0), (1, -1), "CENTER"),
         ("ALIGN", (3, 0), (4, -1), "CENTER"),
     ]))
