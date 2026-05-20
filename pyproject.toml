@@ -37,6 +37,7 @@ dependencies = [
     "rich>=13.7",
     # Matplotlib (gráficos embutidos na GUI e PDF)
     "matplotlib>=3.9",
+    "openpyxl>=3.1.5",
 ]
 
 [project.optional-dependencies]

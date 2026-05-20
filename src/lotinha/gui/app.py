@@ -11,6 +11,7 @@ from lotinha.gui.views.backtesting import BacktestingView
 from lotinha.gui.views.dashboard import DashboardView
 from lotinha.gui.views.extraction import ExtractionView
 from lotinha.gui.views.prediction import PredictionView
+from lotinha.gui.views.reports_view import ReportsView
 
 
 class App(ctk.CTk):
@@ -59,6 +60,7 @@ class App(ctk.CTk):
             ("Análise",     self._make_analysis),
             ("Predição",    self._make_prediction),
             ("Backtesting", self._make_backtesting),
+            ("Relatórios",  self._make_reports),
         ]
         for name, factory in tab_defs:
             tab = tabs.add(name)
@@ -83,3 +85,6 @@ class App(ctk.CTk):
 
     def _make_backtesting(self, parent: Any) -> BacktestingView:
         return BacktestingView(parent, repo=self._repo, settings=self._settings)
+
+    def _make_reports(self, parent: Any) -> ReportsView:
+        return ReportsView(parent, repo=self._repo, settings=self._settings)

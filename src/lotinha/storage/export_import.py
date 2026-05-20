@@ -122,6 +122,54 @@ def import_from_parquet(repo: SorteioRepository, input_path: Path) -> int:
     return repo.upsert_batch(sorteios)
 
 
+def export_to_excel(repo: SorteioRepository, output_path: Path) -> int:
+    """Exporta histórico para Excel com uma sheet por banca/horário.
+
+    Cada sheet tem colunas: Data, N01..N15 (números individuais, ordenados).
+
+    Returns:
+        Total de linhas exportadas.
+
+    Raises:
+        ExportError: Em caso de falha ao gravar o arquivo.
+    """
+    try:
+        import pandas as pd
+    except ImportError as exc:
+        raise ExportError("pandas é necessário para exportar em Excel") from exc
+
+    bancas = sorted(repo.list_bancas())
+    horarios = sorted(repo.list_horarios())
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    total = 0
+    try:
+        with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
+            for banca in bancas:
+                for hora in horarios:
+                    df = repo.get_resultados(banca=banca, hora=hora)
+                    if df.empty:
+                        continue
+
+                    rows = []
+                    for _, row in df.iterrows():
+                        nums = sorted(row["numeros"])
+                        entry: dict[str, object] = {"Data": row["data"]}
+                        for i, n in enumerate(nums, start=1):
+                            entry[f"N{i:02d}"] = n
+                        rows.append(entry)
+
+                    sheet_df = pd.DataFrame(rows).sort_values("Data")
+                    banca_short = banca.replace("LOTINHA ", "")
+                    sheet_name = f"{banca_short} {hora:02d}h"[:31]
+                    sheet_df.to_excel(writer, sheet_name=sheet_name, index=False)
+                    total += len(sheet_df)
+    except Exception as exc:
+        raise ExportError(f"Falha ao gravar Excel {output_path}: {exc}") from exc
+
+    return total
+
+
 def _dict_to_sorteio(d: dict[str, Any]) -> Sorteio:
     """Converte dicionário (export format) em entidade Sorteio."""
     numeros = d["numeros"]
