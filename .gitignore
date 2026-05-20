@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtualenv / uv
+.venv/
+venv/
+.uv/
+
+# Dados locais (não versionar)
+data/
+logs/
+htmlcov/
+.coverage
+.coverage.*
+
+# Mypy cache
+.mypy_cache/
+
+# Ruff cache
+.ruff_cache/
+
+# Pytest cache
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+!.env.example
+
+# PyInstaller
+*.spec
+dist/
