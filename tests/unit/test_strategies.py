@@ -51,12 +51,12 @@ class TestFrequenciaStrategy:
 
     def test_retorna_n_numeros(self, strategy) -> None:
         df = _synthetic_df(10)
-        result = strategy.predict(df, n=22)
-        _assert_valid_result(result, 22)
+        result = strategy.predict(df, n=23)
+        _assert_valid_result(result, 23)
 
     def test_n_variavel(self, strategy) -> None:
         df = _synthetic_df(10)
-        for n in [17, 18, 19, 20, 21, 22]:
+        for n in [17, 18, 19, 20, 21, 22, 23]:
             result = strategy.predict(df, n=n)
             assert len(result.numeros) == n
 
@@ -83,7 +83,7 @@ class TestFrequenciaStrategy:
         strategy_janela = FrequenciaStrategy(janela=5)
         df = _synthetic_df(20)
         result = strategy_janela.predict(df)
-        _assert_valid_result(result, 22)
+        _assert_valid_result(result, 23)
 
     def test_insufficient_data(self, strategy) -> None:
         df = pd.DataFrame({"numeros": pd.Series([], dtype=object)})
@@ -95,7 +95,7 @@ class TestFrequenciaStrategy:
         with pytest.raises(ValueError):
             strategy.predict(df, n=16)
         with pytest.raises(ValueError):
-            strategy.predict(df, n=23)
+            strategy.predict(df, n=24)
 
 
 # ---------------------------------------------------------------------------
@@ -110,8 +110,8 @@ class TestAtrasoStrategy:
 
     def test_retorna_n_numeros(self, strategy) -> None:
         df = _synthetic_df(10)
-        result = strategy.predict(df, n=22)
-        _assert_valid_result(result, 22)
+        result = strategy.predict(df, n=23)
+        _assert_valid_result(result, 23)
 
     def test_nome_correto(self, strategy) -> None:
         df = _synthetic_df(5)
@@ -142,7 +142,7 @@ class TestAtrasoStrategy:
 
     def test_n_variavel(self, strategy) -> None:
         df = _synthetic_df(10)
-        for n in [17, 19, 22]:
+        for n in [17, 19, 23]:
             result = strategy.predict(df, n=n)
             assert len(result.numeros) == n
 
@@ -159,8 +159,8 @@ class TestMarkovStrategy:
 
     def test_retorna_n_numeros(self, strategy) -> None:
         df = _synthetic_df(15)
-        result = strategy.predict(df, n=22)
-        _assert_valid_result(result, 22)
+        result = strategy.predict(df, n=23)
+        _assert_valid_result(result, 23)
 
     def test_nome_correto(self, strategy) -> None:
         df = _synthetic_df(5)
@@ -177,8 +177,8 @@ class TestMarkovStrategy:
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
         )
-        result = strategy.predict(df, n=22)
-        _assert_valid_result(result, 22)
+        result = strategy.predict(df, n=23)
+        _assert_valid_result(result, 23)
 
     def test_scores_cobre_todos_25(self, strategy) -> None:
         df = _synthetic_df(10)
@@ -193,7 +193,7 @@ class TestMarkovStrategy:
     def test_n_invalido(self, strategy) -> None:
         df = _synthetic_df(5)
         with pytest.raises(ValueError):
-            strategy.predict(df, n=23)
+            strategy.predict(df, n=24)
 
 
 # ---------------------------------------------------------------------------
@@ -215,8 +215,8 @@ class TestLightGBMStrategy:
 
     def test_predict_com_dados_suficientes(self, strategy_min5) -> None:
         df = _synthetic_df(10)  # > min_draws=5
-        result = strategy_min5.predict(df, n=22)
-        _assert_valid_result(result, 22)
+        result = strategy_min5.predict(df, n=23)
+        _assert_valid_result(result, 23)
 
     def test_nome_correto(self, strategy_min5) -> None:
         df = _synthetic_df(10)
@@ -229,7 +229,7 @@ class TestLightGBMStrategy:
         assert strategy_min5.is_fitted
         # Segunda chamada não deve falhar
         result2 = strategy_min5.predict(df)
-        _assert_valid_result(result2, 22)
+        _assert_valid_result(result2, 23)
 
     def test_fit_explicito(self, strategy_min5) -> None:
         df = _synthetic_df(10)
@@ -244,7 +244,7 @@ class TestLightGBMStrategy:
 
     def test_n_variavel(self, strategy_min5) -> None:
         df = _synthetic_df(10)
-        for n in [17, 20, 22]:
+        for n in [17, 20, 23]:
             result = strategy_min5.predict(df, n=n)
             assert len(result.numeros) == n
 
@@ -253,8 +253,8 @@ class TestLightGBMStrategy:
         from lotinha.analysis.strategies import LightGBMStrategy
         strategy = LightGBMStrategy()  # default min_draws=90
         df = _synthetic_df(100)
-        result = strategy.predict(df, n=22)
-        _assert_valid_result(result, 22)
+        result = strategy.predict(df, n=23)
+        _assert_valid_result(result, 23)
 
 
 # ---------------------------------------------------------------------------
@@ -274,8 +274,8 @@ class TestEnsembleStrategy:
 
     def test_retorna_n_numeros(self, ensemble) -> None:
         df = _synthetic_df(10)
-        result = ensemble.predict(df, n=22)
-        _assert_valid_result(result, 22)
+        result = ensemble.predict(df, n=23)
+        _assert_valid_result(result, 23)
 
     def test_nome_correto(self, ensemble) -> None:
         df = _synthetic_df(10)
@@ -298,8 +298,8 @@ class TestEnsembleStrategy:
             weights=[0.8, 0.2],
         )
         df = _synthetic_df(10)
-        result = ensemble.predict(df, n=22)
-        _assert_valid_result(result, 22)
+        result = ensemble.predict(df, n=23)
+        _assert_valid_result(result, 23)
 
     def test_pesos_uniformes_por_default(self, components) -> None:
         from lotinha.analysis.strategies import EnsembleStrategy
@@ -313,7 +313,7 @@ class TestEnsembleStrategy:
 
     def test_n_variavel(self, ensemble) -> None:
         df = _synthetic_df(10)
-        for n in [17, 19, 22]:
+        for n in [17, 19, 23]:
             result = ensemble.predict(df, n=n)
             assert len(result.numeros) == n
 
@@ -340,5 +340,5 @@ class TestEnsembleStrategy:
             weights=[0.5, 0.3, 0.2],
         )
         df = _synthetic_df(10)
-        result = ensemble.predict(df, n=22)
-        _assert_valid_result(result, 22)
+        result = ensemble.predict(df, n=23)
+        _assert_valid_result(result, 23)

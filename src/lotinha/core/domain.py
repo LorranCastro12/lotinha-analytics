@@ -102,7 +102,7 @@ class Prediction:
         hora: Hora do sorteio alvo.
         banca: Banca operadora alvo.
         estrategia: Nome da estratégia usada.
-        numeros_preditos: Lista dos números recomendados (≤ 22).
+        numeros_preditos: Lista dos números recomendados (≤ 23).
         criado_em: Momento da geração.
         acertos: Número de acertos no sorteio real (None antes do resultado).
         id: Chave primária do banco (None antes de persistir).
@@ -118,9 +118,9 @@ class Prediction:
     id: int | None = None
 
     def __post_init__(self) -> None:
-        if not (17 <= len(self.numeros_preditos) <= 22):
+        if not (17 <= len(self.numeros_preditos) <= 23):
             raise DomainValidationError(
-                f"numeros_preditos deve ter entre 17 e 22 elementos, "
+                f"numeros_preditos deve ter entre 17 e 23 elementos, "
                 f"recebido: {len(self.numeros_preditos)}"
             )
         if len(set(self.numeros_preditos)) != len(self.numeros_preditos):

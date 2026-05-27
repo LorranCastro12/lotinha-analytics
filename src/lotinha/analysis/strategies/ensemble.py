@@ -40,7 +40,7 @@ class EnsembleStrategy(BaseStrategy):
     def weights(self) -> list[float]:
         return list(self._weights)
 
-    def predict(self, df: pd.DataFrame, n: int = 22) -> PredictionResult:
+    def predict(self, df: pd.DataFrame, n: int = 23) -> PredictionResult:
         self._validate_n(n)
 
         total_weight = sum(self._weights)
@@ -48,7 +48,7 @@ class EnsembleStrategy(BaseStrategy):
 
         for strategy, weight in zip(self._strategies, self._weights, strict=True):
             # Pede todos os 25 scores para normalizar adequadamente
-            result = strategy.predict(df, n=22)
+            result = strategy.predict(df, n=23)
             raw = pd.Series(result.scores)
             normed = normalize(raw)
             combined += (weight / total_weight) * normed

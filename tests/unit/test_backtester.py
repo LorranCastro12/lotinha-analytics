@@ -32,7 +32,7 @@ class FixedStrategy(BaseStrategy):
     def reset(self) -> None:
         self.reset_count += 1
 
-    def predict(self, df: pd.DataFrame, n: int = 22) -> PredictionResult:
+    def predict(self, df: pd.DataFrame, n: int = 23) -> PredictionResult:
         if len(df) == 0:
             raise InsufficientDataError(required=1, available=0)
         scores = {i: 1.0 if i in self._numeros else 0.0 for i in range(1, 26)}
@@ -67,7 +67,7 @@ class TestBacktestResult:
         from lotinha.analysis.backtester import BacktestResult
         defaults: dict[str, Any] = dict(
             strategy_name="fixed",
-            n_preditos=22,
+            n_preditos=23,
             n_draws_tested=20,
             acertos_strategy=list(range(8, 28)),   # 20 valores
             acertos_random=list(range(7, 27)),      # 20 valores
@@ -154,33 +154,33 @@ class TestBacktester:
 
     def test_retorna_backtest_result(self, backtester) -> None:
         from lotinha.analysis.backtester import BacktestResult
-        strategy = FixedStrategy(list(range(1, 23)))  # números 1..22
+        strategy = FixedStrategy(list(range(1, 24)))  # números 1..23
         df = _synthetic_df(30)
-        result = backtester.run(df, strategy, n_preditos=22, train_size=20)
+        result = backtester.run(df, strategy, n_preditos=23, train_size=20)
         assert isinstance(result, BacktestResult)
 
     def test_n_draws_tested_correto(self, backtester) -> None:
-        strategy = FixedStrategy(list(range(1, 23)))
+        strategy = FixedStrategy(list(range(1, 24)))
         df = _synthetic_df(30)
-        result = backtester.run(df, strategy, n_preditos=22, train_size=20)
+        result = backtester.run(df, strategy, n_preditos=23, train_size=20)
         # test draws = len(df) - train_size = 10
         assert result.n_draws_tested == 10
 
     def test_acertos_lista_tamanho_correto(self, backtester) -> None:
-        strategy = FixedStrategy(list(range(1, 23)))
+        strategy = FixedStrategy(list(range(1, 24)))
         df = _synthetic_df(30)
-        result = backtester.run(df, strategy, n_preditos=22, train_size=20)
+        result = backtester.run(df, strategy, n_preditos=23, train_size=20)
         assert len(result.acertos_strategy) == result.n_draws_tested
         assert len(result.acertos_random) == result.n_draws_tested
 
     def test_strategy_name_correto(self, backtester) -> None:
-        strategy = FixedStrategy(list(range(1, 23)), name_="minha_strat")
+        strategy = FixedStrategy(list(range(1, 24)), name_="minha_strat")
         df = _synthetic_df(30)
-        result = backtester.run(df, strategy, n_preditos=22, train_size=20)
+        result = backtester.run(df, strategy, n_preditos=23, train_size=20)
         assert result.strategy_name == "minha_strat"
 
     def test_acertos_entre_0_e_15(self, backtester) -> None:
-        strategy = FixedStrategy(list(range(1, 23)))
+        strategy = FixedStrategy(list(range(1, 24)))
         df = _synthetic_df(30)
         result = backtester.run(df, strategy, train_size=20)
         for a in result.acertos_strategy:
@@ -195,7 +195,7 @@ class TestBacktester:
             backtester.run(df, strategy, train_size=20)
 
     def test_progress_callback_chamado(self, backtester) -> None:
-        strategy = FixedStrategy(list(range(1, 23)))
+        strategy = FixedStrategy(list(range(1, 24)))
         df = _synthetic_df(30)
         calls: list[tuple[int, int]] = []
         backtester.run(df, strategy, train_size=20,
@@ -205,7 +205,7 @@ class TestBacktester:
         assert calls[-1] == (10, 10)
 
     def test_reset_chamado_antes_de_cada_predict(self, backtester) -> None:
-        strategy = FixedStrategy(list(range(1, 23)))
+        strategy = FixedStrategy(list(range(1, 24)))
         df = _synthetic_df(30)
         backtester.run(df, strategy, train_size=20)
         # reset deve ter sido chamado 10 vezes (uma por draw testado)
@@ -223,7 +223,7 @@ class TestBacktester:
         assert all(p == 500.0 for p in result.prizes_strategy)
 
     def test_cost_per_draw_no_resultado(self, backtester) -> None:
-        strategy = FixedStrategy(list(range(1, 23)))
+        strategy = FixedStrategy(list(range(1, 24)))
         df = _synthetic_df(30)
         result = backtester.run(df, strategy, train_size=20)
         assert result.cost_per_draw == 2.0
@@ -281,7 +281,7 @@ class TestWilcoxon:
     def test_warning_quando_p_alto(self) -> None:
         from lotinha.analysis.backtester import Backtester
         bt = Backtester(premios={}, custo=1.0, seed=42)
-        strategy = FixedStrategy(list(range(1, 23)))
+        strategy = FixedStrategy(list(range(1, 24)))
         df = _synthetic_df(30)
         result = bt.run(df, strategy, train_size=15)
         # Com dados aleatórios, estratégia fixa não deve bater aleatório

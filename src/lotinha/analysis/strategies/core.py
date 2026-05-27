@@ -27,7 +27,7 @@ class FrequenciaStrategy(BaseStrategy):
     def name(self) -> str:
         return "frequencia"
 
-    def predict(self, df: pd.DataFrame, n: int = 22) -> PredictionResult:
+    def predict(self, df: pd.DataFrame, n: int = 23) -> PredictionResult:
         self._validate_n(n)
         if len(df) == 0:
             raise InsufficientDataError(required=1, available=0)
@@ -52,7 +52,7 @@ class AtrasoStrategy(BaseStrategy):
     def name(self) -> str:
         return "atraso"
 
-    def predict(self, df: pd.DataFrame, n: int = 22) -> PredictionResult:
+    def predict(self, df: pd.DataFrame, n: int = 23) -> PredictionResult:
         self._validate_n(n)
         if len(df) == 0:
             raise InsufficientDataError(required=1, available=0)

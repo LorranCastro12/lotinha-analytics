@@ -35,7 +35,7 @@ def generate_predictions_pdf(
     output: Path,
     data_alvo: date,
     estrategia_nome: str = "Ensemble",
-    n_preditos: int = 22,
+    n_preditos: int = 23,
 ) -> tuple[Path, int]:
     """Gera PDF com predições para todas as bancas/horários de uma data.
 

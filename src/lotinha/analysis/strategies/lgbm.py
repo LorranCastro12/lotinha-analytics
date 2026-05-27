@@ -82,7 +82,7 @@ class LightGBMStrategy(BaseStrategy):
         model.fit(X, y)
         self._model = model
 
-    def predict(self, df: pd.DataFrame, n: int = 22) -> PredictionResult:
+    def predict(self, df: pd.DataFrame, n: int = 23) -> PredictionResult:
         self._validate_n(n)
         if len(df) < self._min_draws:
             raise InsufficientDataError(required=self._min_draws, available=len(df))

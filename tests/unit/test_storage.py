@@ -86,10 +86,10 @@ class TestPredictionDomain:
             hora=8,
             banca="Lotinha Ponto",
             estrategia="frequency",
-            numeros_preditos=list(range(1, 23)),
+            numeros_preditos=list(range(1, 24)),
             criado_em=datetime.now(),
         )
-        assert len(p.numeros_preditos) == 22
+        assert len(p.numeros_preditos) == 23
 
     def test_numeros_abaixo_do_minimo(self) -> None:
         with pytest.raises(Exception):
@@ -109,7 +109,7 @@ class TestPredictionDomain:
                 hora=8,
                 banca="B",
                 estrategia="freq",
-                numeros_preditos=list(range(1, 24)),  # 23 > 22
+                numeros_preditos=list(range(1, 25)),  # 24 > 23
                 criado_em=datetime.now(),
             )
 
@@ -120,7 +120,7 @@ class TestPredictionDomain:
                 hora=8,
                 banca="B",
                 estrategia="freq",
-                numeros_preditos=[1] * 22,
+                numeros_preditos=[1] * 23,
                 criado_em=datetime.now(),
             )
 

@@ -19,25 +19,25 @@ class BaseStrategy(ABC):
         """Identificador único da estratégia."""
 
     @abstractmethod
-    def predict(self, df: pd.DataFrame, n: int = 22) -> PredictionResult:
+    def predict(self, df: pd.DataFrame, n: int = 23) -> PredictionResult:
         """Prediz os n números mais prováveis para o próximo sorteio.
 
         Args:
             df: Histórico de sorteios ordenado cronologicamente,
                 com coluna ``numeros`` (list[int]).
-            n: Quantidade de números a retornar (17..22).
+            n: Quantidade de números a retornar (17..23).
 
         Returns:
             PredictionResult com números preditos, scores 1..25 e confiança.
 
         Raises:
             InsufficientDataError: Histórico insuficiente para a estratégia.
-            ValueError: Se n estiver fora de [17, 22].
+            ValueError: Se n estiver fora de [17, 23].
         """
 
     def _validate_n(self, n: int) -> None:
-        if not (17 <= n <= 22):
-            raise ValueError(f"n deve estar entre 17 e 22, recebido {n}")
+        if not (17 <= n <= 23):
+            raise ValueError(f"n deve estar entre 17 e 23, recebido {n}")
 
     def reset(self) -> None:  # noqa: B027
         """Reinicia o estado interno da estratégia (no-op para estratégias sem estado)."""

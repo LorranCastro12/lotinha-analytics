@@ -119,7 +119,7 @@ class Backtester:
         self,
         df: pd.DataFrame,
         strategy: BaseStrategy,
-        n_preditos: int = 22,
+        n_preditos: int = 23,
         train_size: int = 60,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> BacktestResult:
@@ -128,7 +128,7 @@ class Backtester:
         Args:
             df: Histórico de sorteios ordenado cronologicamente.
             strategy: Estratégia a avaliar.
-            n_preditos: Números apostados por draw (17..22).
+            n_preditos: Números apostados por draw (17..23).
             train_size: Mínimo de draws usados como histórico inicial.
             progress_callback: Chamado com (atual, total) a cada draw testado.
 

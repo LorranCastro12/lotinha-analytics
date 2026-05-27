@@ -64,13 +64,13 @@ class PredictionView(ctk.CTkFrame):
 
         ctk.CTkLabel(ctrl, text="N preditos:", anchor="w").grid(
             row=row, column=0, padx=12, pady=6, sticky="w")
-        self._n_var = ctk.IntVar(value=22)
-        ctk.CTkSlider(ctrl, variable=self._n_var, from_=17, to=22, number_of_steps=5,
+        self._n_var = ctk.IntVar(value=23)
+        ctk.CTkSlider(ctrl, variable=self._n_var, from_=17, to=23, number_of_steps=6,
                        command=lambda v: self._n_label.configure(
                            text=str(int(v)))).grid(
             row=row, column=1, padx=12, pady=6, sticky="ew")
         row += 1
-        self._n_label = ctk.CTkLabel(ctrl, text="22")
+        self._n_label = ctk.CTkLabel(ctrl, text="23")
         self._n_label.grid(row=row, column=1, padx=12, sticky="w")
         row += 1
 
