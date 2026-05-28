@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lotinha-analytics"
-version = "0.2.0"
+version = "0.3.0"
 description = "Sistema de análise e predição de resultados da Lotinha"
 readme = "README.md"
 requires-python = ">=3.11"

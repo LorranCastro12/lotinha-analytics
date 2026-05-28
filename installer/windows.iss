@@ -3,7 +3,7 @@
 ; Executar após pyinstaller lotinha.spec gerar dist\lotinha-analytics.exe
 
 #define MyAppName "Lotinha Analytics"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "0.3.0"
 #define MyAppPublisher "Lotinha Analytics"
 #define MyAppExeName "lotinha-analytics.exe"
 
