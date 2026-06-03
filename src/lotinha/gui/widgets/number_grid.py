@@ -3,32 +3,53 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
 
-import customtkinter as ctk
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QGridLayout, QPushButton, QWidget
 
 
-class NumberGrid(ctk.CTkFrame):
+class NumberGrid(QWidget):
     """Grade 5x5 exibindo os números 1..25 com destaque configurável.
 
     Args:
-        master: Widget pai.
+        parent: Widget pai.
         on_click: Callback opcional chamado com o número ao clicar.
     """
 
-    _COL_DEFAULT  = ("gray80", "gray25")
-    _COL_SELECTED = ("#2CC985", "#1A8A5A")   # verde
-    _COL_TOP      = ("#F4A000", "#B07000")   # laranja (score alto)
+    _STYLE_DEFAULT = (
+        "QPushButton {"
+        "background-color: #1a1a2a; color: #2CC985; "
+        "border: 1px solid #2CC985; border-radius: 8px; "
+        "font-size: 16px; font-weight: bold;"
+        "}"
+        "QPushButton:hover { background-color: #222238; }"
+    )
+    _STYLE_SELECTED = (
+        "QPushButton {"
+        "background-color: #2CC985; color: #000000; "
+        "border: 2px solid #2CC985; border-radius: 8px; "
+        "font-size: 16px; font-weight: bold;"
+        "}"
+        "QPushButton:hover { background-color: #3ae0a0; }"
+    )
+    _STYLE_TOP = (
+        "QPushButton {"
+        "background-color: #F4A000; color: #000000; "
+        "border: 2px solid #F4A000; border-radius: 8px; "
+        "font-size: 16px; font-weight: bold;"
+        "}"
+        "QPushButton:hover { background-color: #ffb822; }"
+    )
 
     def __init__(
         self,
-        master: ctk.CTkBaseClass,
+        parent: QWidget | None = None,
         on_click: Callable[[int], None] | None = None,
-        **kwargs: Any,
     ) -> None:
-        super().__init__(master, **kwargs)
+        super().__init__(parent)
         self._on_click = on_click
-        self._buttons: dict[int, ctk.CTkButton] = {}
+        self._buttons: dict[int, QPushButton] = {}
         self._highlighted: set[int] = set()
         self._build()
 
@@ -44,34 +65,38 @@ class NumberGrid(ctk.CTkFrame):
         top_set = set(top or [])
         for num, btn in self._buttons.items():
             if num in top_set:
-                btn.configure(fg_color=self._COL_TOP)
+                btn.setStyleSheet(self._STYLE_TOP)
             elif num in numbers:
-                btn.configure(fg_color=self._COL_SELECTED)
+                btn.setStyleSheet(self._STYLE_SELECTED)
             else:
-                btn.configure(fg_color=self._COL_DEFAULT)
+                btn.setStyleSheet(self._STYLE_DEFAULT)
         self._highlighted = set(numbers)
 
     def clear(self) -> None:
         for btn in self._buttons.values():
-            btn.configure(fg_color=self._COL_DEFAULT)
+            btn.setStyleSheet(self._STYLE_DEFAULT)
         self._highlighted.clear()
 
     # ── Internals ──────────────────────────────────────────────────────────
 
     def _build(self) -> None:
+        layout = QGridLayout(self)
+        layout.setSpacing(6)
+        layout.setContentsMargins(4, 4, 4, 4)
+
+        font = QFont()
+        font.setPointSize(13)
+        font.setBold(True)
+
         for i, num in enumerate(range(1, 26)):
             row, col = divmod(i, 5)
-            btn = ctk.CTkButton(
-                self,
-                text=str(num),
-                width=52,
-                height=52,
-                corner_radius=8,
-                fg_color=self._COL_DEFAULT,
-                font=ctk.CTkFont(size=14, weight="bold"),
-                command=lambda n=num: self._clicked(n),
-            )
-            btn.grid(row=row, column=col, padx=4, pady=4)
+            btn = QPushButton(str(num))
+            btn.setFont(font)
+            btn.setFixedSize(62, 62)
+            btn.setStyleSheet(self._STYLE_DEFAULT)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.clicked.connect(lambda checked=False, n=num: self._clicked(n))
+            layout.addWidget(btn, row, col)
             self._buttons[num] = btn
 
     def _clicked(self, num: int) -> None:

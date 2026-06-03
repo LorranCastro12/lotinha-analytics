@@ -4,8 +4,18 @@ from __future__ import annotations
 
 from typing import Any
 
-import customtkinter as ctk
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
+from lotinha.gui.theme import COLOR_PRIMARY
 from lotinha.gui.views.analysis import AnalysisView
 from lotinha.gui.views.backtesting import BacktestingView
 from lotinha.gui.views.dashboard import DashboardView
@@ -14,77 +24,53 @@ from lotinha.gui.views.prediction import PredictionView
 from lotinha.gui.views.reports_view import ReportsView
 
 
-class App(ctk.CTk):
-    """Janela principal com CTkTabview de 5 abas.
-
-    Args:
-        repo: Repositório de sorteios.
-        settings: Configurações do sistema.
-    """
+class App(QMainWindow):
+    """Janela principal com QTabWidget de 6 abas."""
 
     def __init__(self, repo: Any, settings: Any) -> None:
         super().__init__()
-        ctk.set_appearance_mode("dark")
-        ctk.set_default_color_theme("green")
-
-        self.title("Lotinha Analytics")
-        self.geometry("1100x760")
-        self.minsize(900, 640)
-
         self._repo = repo
         self._settings = settings
+
+        self.setWindowTitle("Lotinha Analytics")
+        self.resize(1100, 760)
+        self.setMinimumSize(900, 640)
 
         self._build()
 
     def _build(self) -> None:
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
+        central = QWidget()
+        self.setCentralWidget(central)
+        outer = QVBoxLayout(central)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
 
-        # Cabeçalho
-        header = ctk.CTkFrame(self, height=48, corner_radius=0)
-        header.grid(row=0, column=0, sticky="ew")
-        ctk.CTkLabel(
-            header,
-            text="  Lotinha Analytics",
-            font=ctk.CTkFont(size=17, weight="bold"),
-            text_color="#2CC985",
-        ).pack(side="left", padx=16, pady=8)
+        # ── Cabeçalho ────────────────────────────────────────────────────
+        header = QWidget()
+        header.setObjectName("header")
+        header.setFixedHeight(50)
+        h_layout = QHBoxLayout(header)
+        h_layout.setContentsMargins(20, 0, 20, 0)
 
-        # Tabs
-        tabs = ctk.CTkTabview(self, anchor="nw")
-        tabs.grid(row=1, column=0, padx=12, pady=(4, 12), sticky="nsew")
+        title_lbl = QLabel("  Lotinha Analytics")
+        font = QFont()
+        font.setPointSize(14)
+        font.setBold(True)
+        title_lbl.setFont(font)
+        title_lbl.setStyleSheet(f"color: {COLOR_PRIMARY}; background: transparent;")
+        title_lbl.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        h_layout.addWidget(title_lbl)
+        h_layout.addStretch()
+        outer.addWidget(header)
 
-        tab_defs = [
-            ("Dashboard",   self._make_dashboard),
-            ("Extração",    self._make_extraction),
-            ("Análise",     self._make_analysis),
-            ("Predição",    self._make_prediction),
-            ("Backtesting", self._make_backtesting),
-            ("Relatórios",  self._make_reports),
-        ]
-        for name, factory in tab_defs:
-            tab = tabs.add(name)
-            tab.columnconfigure(0, weight=1)
-            tab.rowconfigure(0, weight=1)
-            view = factory(tab)
-            view.grid(row=0, column=0, sticky="nsew")
+        # ── Tabs ──────────────────────────────────────────────────────────
+        tabs = QTabWidget()
+        tabs.setDocumentMode(True)
+        outer.addWidget(tabs)
 
-    # ── Factories ──────────────────────────────────────────────────────────
-
-    def _make_dashboard(self, parent: Any) -> DashboardView:
-        return DashboardView(parent, repo=self._repo)
-
-    def _make_extraction(self, parent: Any) -> ExtractionView:
-        return ExtractionView(parent, repo=self._repo, settings=self._settings)
-
-    def _make_analysis(self, parent: Any) -> AnalysisView:
-        return AnalysisView(parent, repo=self._repo)
-
-    def _make_prediction(self, parent: Any) -> PredictionView:
-        return PredictionView(parent, repo=self._repo)
-
-    def _make_backtesting(self, parent: Any) -> BacktestingView:
-        return BacktestingView(parent, repo=self._repo, settings=self._settings)
-
-    def _make_reports(self, parent: Any) -> ReportsView:
-        return ReportsView(parent, repo=self._repo, settings=self._settings)
+        tabs.addTab(DashboardView(repo=self._repo), "Dashboard")
+        tabs.addTab(ExtractionView(repo=self._repo, settings=self._settings), "Extração")
+        tabs.addTab(AnalysisView(repo=self._repo), "Análise")
+        tabs.addTab(PredictionView(repo=self._repo), "Predição")
+        tabs.addTab(BacktestingView(repo=self._repo, settings=self._settings), "Backtesting")
+        tabs.addTab(ReportsView(repo=self._repo, settings=self._settings), "Relatórios")

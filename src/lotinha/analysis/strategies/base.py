@@ -36,8 +36,8 @@ class BaseStrategy(ABC):
         """
 
     def _validate_n(self, n: int) -> None:
-        if not (17 <= n <= 23):
-            raise ValueError(f"n deve estar entre 17 e 23, recebido {n}")
+        if not (17 <= n <= 25):
+            raise ValueError(f"n deve estar entre 17 e 25, recebido {n}")
 
     def reset(self) -> None:  # noqa: B027
         """Reinicia o estado interno da estratégia (no-op para estratégias sem estado)."""

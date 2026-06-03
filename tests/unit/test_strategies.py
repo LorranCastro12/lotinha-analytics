@@ -95,7 +95,7 @@ class TestFrequenciaStrategy:
         with pytest.raises(ValueError):
             strategy.predict(df, n=16)
         with pytest.raises(ValueError):
-            strategy.predict(df, n=24)
+            strategy.predict(df, n=26)
 
 
 # ---------------------------------------------------------------------------
@@ -193,7 +193,7 @@ class TestMarkovStrategy:
     def test_n_invalido(self, strategy) -> None:
         df = _synthetic_df(5)
         with pytest.raises(ValueError):
-            strategy.predict(df, n=24)
+            strategy.predict(df, n=26)
 
 
 # ---------------------------------------------------------------------------
@@ -342,3 +342,145 @@ class TestEnsembleStrategy:
         df = _synthetic_df(10)
         result = ensemble.predict(df, n=23)
         _assert_valid_result(result, 23)
+
+
+# ---------------------------------------------------------------------------
+# Markov com df_global (blend) — M3
+# ---------------------------------------------------------------------------
+
+class TestMarkovBlend:
+    def test_blend_com_df_global(self) -> None:
+        from lotinha.analysis.strategies import MarkovStrategy
+        df_hora = _synthetic_df(10, seed=1)
+        df_banca = _synthetic_df(50, seed=2)
+        strategy = MarkovStrategy()
+        result = strategy.predict(df_hora, n=22, df_global=df_banca, blend=0.35)
+        _assert_valid_result(result, 22)
+
+    def test_blend_ignorado_quando_global_pequeno(self) -> None:
+        from lotinha.analysis.strategies import MarkovStrategy
+        df_hora = _synthetic_df(10, seed=1)
+        df_global_pequeno = _synthetic_df(5, seed=3)  # < 30 → não usa blend
+        strategy = MarkovStrategy()
+        result = strategy.predict(df_hora, n=22, df_global=df_global_pequeno)
+        _assert_valid_result(result, 22)
+
+    def test_alpha_no_metadata(self) -> None:
+        from lotinha.analysis.strategies import MarkovStrategy
+        df = _synthetic_df(10)
+        result = MarkovStrategy(alpha=1.0).predict(df, n=22)
+        assert result.metadata["alpha"] == 1.0
+
+    def test_n_maximo_25(self) -> None:
+        from lotinha.analysis.strategies import MarkovStrategy
+        df = _synthetic_df(10)
+        result = MarkovStrategy().predict(df, n=25)
+        _assert_valid_result(result, 25)
+
+
+# ---------------------------------------------------------------------------
+# HybridMarkovWrapper — M3/M5
+# ---------------------------------------------------------------------------
+
+class TestHybridMarkovWrapper:
+    def test_retorna_resultado_valido(self) -> None:
+        from lotinha.analysis.strategies import HybridMarkovWrapper
+        df_hora = _synthetic_df(10, seed=1)
+        df_banca = _synthetic_df(50, seed=2)
+        wrapper = HybridMarkovWrapper(df_global=df_banca)
+        result = wrapper.predict(df_hora, n=22)
+        _assert_valid_result(result, 22)
+
+    def test_nome_correto(self) -> None:
+        from lotinha.analysis.strategies import HybridMarkovWrapper
+        df_banca = _synthetic_df(50)
+        wrapper = HybridMarkovWrapper(df_global=df_banca)
+        assert wrapper.name == "markov_hybrid"
+
+    def test_n_variavel(self) -> None:
+        from lotinha.analysis.strategies import HybridMarkovWrapper
+        df_hora = _synthetic_df(10, seed=1)
+        df_banca = _synthetic_df(50, seed=2)
+        wrapper = HybridMarkovWrapper(df_global=df_banca)
+        for n in [17, 22, 25]:
+            result = wrapper.predict(df_hora, n=n)
+            assert len(result.numeros) == n
+
+
+# ---------------------------------------------------------------------------
+# BancaAwareLGBMWrapper — M4/M5
+# ---------------------------------------------------------------------------
+
+class TestBancaAwareLGBMWrapper:
+    def test_retorna_resultado_valido(self) -> None:
+        from lotinha.analysis.strategies import BancaAwareLGBMWrapper
+        df_hora = _synthetic_df(5, seed=1)   # ignorado pelo wrapper
+        df_banca = _synthetic_df(60, seed=2)  # usado para treino
+        wrapper = BancaAwareLGBMWrapper(df_banca=df_banca, hora=13, min_draws=10)
+        result = wrapper.predict(df_hora, n=23)
+        _assert_valid_result(result, 23)
+
+    def test_nome_correto(self) -> None:
+        from lotinha.analysis.strategies import BancaAwareLGBMWrapper
+        df_banca = _synthetic_df(60)
+        wrapper = BancaAwareLGBMWrapper(df_banca=df_banca, hora=13, min_draws=10)
+        assert wrapper.name == "lgbm"
+
+    def test_reset_descarta_modelo(self) -> None:
+        from lotinha.analysis.strategies import BancaAwareLGBMWrapper
+        df_banca = _synthetic_df(60, seed=2)
+        wrapper = BancaAwareLGBMWrapper(df_banca=df_banca, hora=9, min_draws=10)
+        wrapper.predict(df_banca, n=23)   # treina
+        assert wrapper._lgbm.is_fitted
+        wrapper.reset()
+        assert not wrapper._lgbm.is_fitted
+
+    def test_df_hora_ignorado(self) -> None:
+        """Wrapper usa df_banca internamente independente do df passado."""
+        from lotinha.analysis.strategies import BancaAwareLGBMWrapper
+        df_banca = _synthetic_df(60, seed=2)
+        wrapper = BancaAwareLGBMWrapper(df_banca=df_banca, hora=13, min_draws=10)
+        df_hora_vazio = _synthetic_df(3, seed=99)
+        # Mesmo com df_hora insuficiente, usa df_banca → não deve lançar erro
+        result = wrapper.predict(df_hora_vazio, n=23)
+        _assert_valid_result(result, 23)
+
+
+# ---------------------------------------------------------------------------
+# LightGBMStrategy com features de hora — M4
+# ---------------------------------------------------------------------------
+
+class TestLightGBMHoraFeatures:
+    def test_predict_com_hora(self) -> None:
+        from lotinha.analysis.strategies import LightGBMStrategy
+        df = _synthetic_df(20)
+        strategy = LightGBMStrategy(min_draws=5)
+        result = strategy.predict(df, n=23, hora=13)
+        _assert_valid_result(result, 23)
+
+    def test_hora_diferente_refaz_modelo(self) -> None:
+        from lotinha.analysis.strategies import LightGBMStrategy
+        df = _synthetic_df(20)
+        strategy = LightGBMStrategy(min_draws=5)
+        strategy.predict(df, n=23, hora=13)
+        assert strategy._trained_hora == 13
+        strategy.predict(df, n=23, hora=7)
+        assert strategy._trained_hora == 7
+
+    def test_features_hora_incluidas(self) -> None:
+        from lotinha.analysis.strategies import LightGBMStrategy
+        strategy = LightGBMStrategy(min_draws=5)
+        df = _synthetic_df(10)
+        feats = strategy._build_features(df, df["numeros"].iloc[-1], hora=13)
+        assert "hora_norm" in feats.columns
+        assert "hora_sin" in feats.columns
+        assert "hora_cos" in feats.columns
+        assert feats.shape[0] == 25
+
+    def test_features_sem_hora(self) -> None:
+        from lotinha.analysis.strategies import LightGBMStrategy
+        strategy = LightGBMStrategy(min_draws=5)
+        df = _synthetic_df(10)
+        feats = strategy._build_features(df, df["numeros"].iloc[-1])
+        assert "hora_norm" not in feats.columns
+        assert feats.shape[0] == 25

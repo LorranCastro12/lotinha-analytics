@@ -4,12 +4,29 @@ from __future__ import annotations
 
 from typing import Any
 
-import customtkinter as ctk
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+from lotinha.gui.theme import (
+    BG_PANEL,
+    BORDER,
+    COLOR_ERROR,
+    COLOR_PRIMARY,
+    TEXT_SECONDARY,
+)
 
 
-class DashboardView(ctk.CTkFrame):
-    def __init__(self, master: Any, repo: Any, **kwargs: Any) -> None:
-        super().__init__(master, **kwargs)
+class DashboardView(QWidget):
+    def __init__(self, repo: Any, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
         self._repo = repo
         self._build()
         self.refresh()
@@ -17,37 +34,72 @@ class DashboardView(ctk.CTkFrame):
     # ── Layout ─────────────────────────────────────────────────────────────
 
     def _build(self) -> None:
-        self.columnconfigure(0, weight=1)
+        outer = QVBoxLayout(self)
+        outer.setAlignment(Qt.AlignmentFlag.AlignTop)
+        outer.setContentsMargins(30, 20, 30, 20)
+        outer.setSpacing(16)
 
-        title = ctk.CTkLabel(self, text="Dashboard", font=ctk.CTkFont(size=22, weight="bold"))
-        title.grid(row=0, column=0, pady=(20, 10))
+        # Título
+        title = QLabel("Dashboard")
+        title.setObjectName("title")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        outer.addWidget(title)
 
-        self._card = ctk.CTkFrame(self)
-        self._card.grid(row=1, column=0, padx=30, pady=10, sticky="ew")
-        self._card.columnconfigure(1, weight=1)
+        # Card de estatísticas
+        card = QWidget()
+        card.setObjectName("card")
+        card.setStyleSheet(
+            f"QWidget#card {{ background-color: {BG_PANEL}; "
+            f"border: 1px solid {BORDER}; border-radius: 10px; }}"
+        )
+        card_layout = QGridLayout(card)
+        card_layout.setContentsMargins(20, 16, 20, 16)
+        card_layout.setHorizontalSpacing(24)
+        card_layout.setVerticalSpacing(10)
+        card_layout.setColumnStretch(1, 1)
 
-        labels = [
-            "Total de sorteios",
-            "Data mais antiga",
-            "Data mais recente",
-            "Dias com dados",
-            "Bancas disponíveis",
-            "Horários disponíveis",
+        bold_font = QFont()
+        bold_font.setBold(True)
+
+        self._stat_labels: dict[str, QLabel] = {}
+        rows = [
+            ("Total de sorteios", "total"),
+            ("Data mais antiga", "data_min"),
+            ("Data mais recente", "data_max"),
+            ("Dias com dados", "dias"),
+            ("Bancas disponíveis", "bancas"),
+            ("Horários disponíveis", "horarios"),
         ]
-        self._values: dict[str, ctk.CTkLabel] = {}
-        for i, lbl in enumerate(labels):
-            ctk.CTkLabel(self._card, text=lbl + ":", anchor="w",
-                         font=ctk.CTkFont(weight="bold")).grid(
-                row=i, column=0, sticky="w", padx=16, pady=6)
-            val = ctk.CTkLabel(self._card, text="—", anchor="w")
-            val.grid(row=i, column=1, sticky="w", padx=16, pady=6)
-            self._values[lbl] = val
+        for i, (text, key) in enumerate(rows):
+            lbl_key = QLabel(text + ":")
+            lbl_key.setFont(bold_font)
+            lbl_val = QLabel("—")
+            lbl_val.setStyleSheet(f"color: {TEXT_SECONDARY};")
+            card_layout.addWidget(lbl_key, i, 0, Qt.AlignmentFlag.AlignLeft)
+            card_layout.addWidget(lbl_val, i, 1, Qt.AlignmentFlag.AlignLeft)
+            self._stat_labels[key] = lbl_val
 
-        btn = ctk.CTkButton(self, text="Atualizar", width=140, command=self.refresh)
-        btn.grid(row=2, column=0, pady=16)
+        outer.addWidget(card)
 
-        self._status = ctk.CTkLabel(self, text="", text_color="gray")
-        self._status.grid(row=3, column=0)
+        # Botão e status
+        btn_row = QWidget()
+        btn_row.setStyleSheet("background: transparent;")
+        btn_h = QHBoxLayout(btn_row)
+        btn_h.setContentsMargins(0, 0, 0, 0)
+        btn_h.addStretch()
+        btn = QPushButton("Atualizar")
+        btn.setFixedWidth(140)
+        btn.clicked.connect(self.refresh)
+        btn_h.addWidget(btn)
+        btn_h.addStretch()
+        outer.addWidget(btn_row)
+
+        self._status_lbl = QLabel("")
+        self._status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._status_lbl.setStyleSheet(f"color: {TEXT_SECONDARY};")
+        outer.addWidget(self._status_lbl)
+
+        outer.addStretch()
 
     # ── Lógica ─────────────────────────────────────────────────────────────
 
@@ -59,17 +111,18 @@ class DashboardView(ctk.CTkFrame):
             horarios = self._repo.list_horarios()
             dates = self._repo.dates_with_data()
 
-            self._set("Total de sorteios", str(total))
-            self._set("Data mais antiga", str(min(dates)) if dates else "—")
-            self._set("Data mais recente", str(latest) if latest else "—")
-            self._set("Dias com dados", str(len(dates)))
-            self._set("Bancas disponíveis",
-                       ", ".join(sorted(bancas)) if bancas else "—")
-            self._set("Horários disponíveis",
-                       "  ".join(f"{h}h" for h in sorted(horarios)) if horarios else "—")
-            self._status.configure(text="Atualizado com sucesso.", text_color="green")
+            self._stat_labels["total"].setText(str(total))
+            self._stat_labels["data_min"].setText(str(min(dates)) if dates else "—")
+            self._stat_labels["data_max"].setText(str(latest) if latest else "—")
+            self._stat_labels["dias"].setText(str(len(dates)))
+            self._stat_labels["bancas"].setText(
+                ", ".join(sorted(bancas)) if bancas else "—"
+            )
+            self._stat_labels["horarios"].setText(
+                "  ".join(f"{h}h" for h in sorted(horarios)) if horarios else "—"
+            )
+            self._status_lbl.setText("Atualizado com sucesso.")
+            self._status_lbl.setStyleSheet(f"color: {COLOR_PRIMARY};")
         except Exception as exc:
-            self._status.configure(text=f"Erro: {exc}", text_color="red")
-
-    def _set(self, key: str, value: str) -> None:
-        self._values[key].configure(text=value)
+            self._status_lbl.setText(f"Erro: {exc}")
+            self._status_lbl.setStyleSheet(f"color: {COLOR_ERROR};")
